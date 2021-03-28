@@ -9,9 +9,9 @@ export type TodoGetters = {
 | this work !!
 |--------------------------------------------------
 */
-export const getter = {
-  getvalue(state: any) {
-    return state.counter;
+export const getter: TodoGetters = {
+  getvalue(state) {
+    return state.counter2;
   },
 };
 

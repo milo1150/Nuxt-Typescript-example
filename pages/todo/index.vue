@@ -1,9 +1,12 @@
 <template>
   <v-app>
     <div class="todobox">
-      <TodoInput :input-value="data.todoname" :edit-value="sampleLog" />
-      <!-- <TodoCard /> -->
-      <p>Current Text : {{ data.todoname }}</p>
+      <TodoInput
+        :input-todo="todoname"
+        :update-todoname="updateTodoname"
+        :add-todo="addTodo"
+      />
+      <TodoCard />
     </div>
   </v-app>
 </template>
@@ -12,40 +15,55 @@
 import {
   defineComponent,
   computed,
-  reactive,
   ref,
   watch,
+  useStore,
+  onMounted,
 } from '@nuxtjs/composition-api';
+import { key, TopicList, GettersPath } from '../../store/todo/index';
+import { MutationTypes } from '../../store/todo/mutation';
 import TodoInput from '../../components/todo/Input.vue';
 import TodoCard from '../../components/todo/TodoCard.vue';
-
-type todoName = {
-  todoname: string;
-  sampleNumber: number;
-};
 
 export default defineComponent({
   components: {
     TodoInput,
     TodoCard,
   },
-  setup(props, { emit }) {
-    const data = reactive<todoName>({
-      todoname: 'emptyzzz',
-      sampleNumber: 0,
-    });
+  setup() {
+    const store = useStore(key);
+    const todoname = ref<string>('');
+    const TodoState = computed<TopicList[]>(
+      () => store.getters[GettersPath.GET_TODO_STATE],
+    );
 
-    watch(data, (value) => {
-      console.log(value.todoname);
-    });
+    // watch(TodoState, (value) => {
+    //   console.log('todostate:', value);
+    // });
 
-    const sampleLog = (value: string) => {
-      console.log('new value:', value);
-      data.todoname = value;
-      console.log('new data obj value:', data.todoname);
+    const updateTodoname = (value: string): void => {
+      // console.log('input value:', value);
+      todoname.value = value;
     };
 
-    return { data, inputValue: data.todoname, sampleLog };
+    const addTodo = (): void => {
+      const name: string = todoname.value;
+      const state = TodoState.value;
+      for (const value of state) {
+        if (value.topicName === name || !name) return;
+      }
+      store.commit({
+        type: MutationTypes.ADD_TOPIC,
+        topicName: name,
+      });
+      // store.commit('classroom/addMember');
+    };
+
+    return {
+      todoname,
+      updateTodoname,
+      addTodo,
+    };
   },
 });
 </script>

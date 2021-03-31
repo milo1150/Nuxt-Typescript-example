@@ -20,6 +20,13 @@ export const state = (): TodoState => ({
   topicList: [
     {
       topicName: 'TEST01',
+      todoList: [
+        { todoName: 'Project 1', status: true },
+        { todoName: 'Project 2', status: false },
+      ],
+    },
+    {
+      topicName: 'TEST02',
       todoList: [],
     },
   ],

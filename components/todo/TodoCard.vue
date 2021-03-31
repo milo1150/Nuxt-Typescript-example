@@ -9,8 +9,18 @@
       <div class="card-header">
         <p class="card-header__text">{{ topic.topicName }}</p>
         <div class="card-header__addtodo-box">
-          <v-text-field label="Todo Name"></v-text-field>
-          <v-btn class="btn-addtodo" color="primary" tile small>Add todo</v-btn>
+          <v-text-field
+            v-model="todoInputName[topic.topicId]"
+            label="Todo Name"
+          ></v-text-field>
+          <v-btn
+            class="btn-addtodo"
+            color="primary"
+            tile
+            small
+            @click="addTodo(topic.topicId)"
+            >Add todo</v-btn
+          >
         </div>
       </div>
       <div class="card-todo">
@@ -23,10 +33,16 @@
             v-model="todoListChecked[topic.topicId]"
             hide-details
             :value="todo.todoName"
-            @change="checkTodo(todo.todoName)"
           >
             <template #label>
-              <span>{{ todo.todoName }}</span>
+              <span
+                :class="{
+                  done:
+                    todoListChecked[topic.topicId] && // if not provoke update value from vuex @setup() cycle
+                    todoListChecked[topic.topicId].includes(todo.todoName),
+                }"
+                >{{ todo.todoName }}</span
+              >
             </template>
           </v-checkbox>
         </div>
@@ -41,12 +57,19 @@ import {
   useStore,
   computed,
   watch,
-  ref,
+  watchEffect,
+  reactive,
+  onBeforeUpdate,
+  onUpdated,
   onMounted,
   onBeforeMount,
-  reactive,
 } from '@nuxtjs/composition-api';
-import { key, TopicList, GettersPath } from '../../store/todo/index';
+import {
+  key,
+  TopicList,
+  GettersPath,
+  MutationsType,
+} from '../../store/todo/index';
 
 type TodoListChecked = {
   [index: string]: Array<string>;
@@ -59,17 +82,22 @@ export default defineComponent({
       () => store.getters[GettersPath.GET_TODO_STATE],
     );
     const todoListChecked = reactive<TodoListChecked>({});
+    const todoInputName = reactive<{ [index: string]: string }>({});
 
-    watch([topicList], () => {
+    watch(topicList, () => {
       console.log('todostate:', topicList.value);
     });
 
-    onBeforeMount(() => {
-      console.log('topicList:', topicList.value);
+    // Update local reactive value
+    const refreshData = (): void => {
+      console.log('REFRESH');
       for (const data of topicList.value) {
         // Add index name in to array
         if (!todoListChecked[data.topicId]) {
           todoListChecked[data.topicId] = [];
+        }
+        if (!todoInputName[data.topicId]) {
+          todoInputName[data.topicId] = data.topicName;
         }
         // if any todo in any topic is done -> add to list
         for (const todo of data.todoList) {
@@ -78,19 +106,66 @@ export default defineComponent({
           }
         }
       }
-      console.log(todoListChecked);
+    };
+
+    // Invoke Update Reactive Fnc
+    refreshData();
+    onUpdated(() => {
+      console.log('UPDATE !!!');
+      refreshData();
     });
 
-    const CheckboxModel = (topicId: string) => {
-      console.log(topicId);
-      return todoListChecked.todo1;
+    // Add Todo
+    const addTodo = (tId: string): void => {
+      const name = todoInputName[tId];
+      store.commit({
+        type: MutationsType.ADD_TODO,
+        data: {
+          topicId: tId,
+          todoName: name,
+        },
+      });
     };
 
-    const checkTodo = (value: string): void => {
-      console.log(value);
-    };
+    /**
+    |--------------------------------------------------
+    | Console
+    |--------------------------------------------------
+    */
+    console.log('TODOLISTCHECKED:', todoListChecked);
+    console.log('DYNAMIC INPUT:', todoInputName);
+    // watchEffect(() => console.log('todolistchecked updated:', todoListChecked));
 
-    return { topicList, checkTodo, todoListChecked, CheckboxModel };
+    // watch(todoListChecked, (value) => {
+    //   console.log('CHECKED UPDATE:', value);
+    // });
+
+    // watch(todoInputName, (value) => {
+    //   console.log('INPUT UPDATE:', value);
+    // });
+
+    // watchEffect(() => console.log(todoInputName.topic1));
+    // watch(
+    //   () => todoInputName.topic1,
+    //   (value) => {
+    //     console.log('wtf:', value);
+    //   },
+    // );
+    onBeforeMount(() => console.log('onBeforeMount'));
+    onMounted(() => console.log('onMounted'));
+    onBeforeUpdate(() => {
+      console.log('onBeforeUpdate');
+    });
+    onUpdated(() => {
+      console.log('onUpdated');
+    });
+
+    return {
+      topicList,
+      todoListChecked,
+      addTodo,
+      todoInputName,
+    };
   },
 });
 </script>

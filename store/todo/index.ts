@@ -8,6 +8,7 @@ export interface TodoList {
 }
 
 export interface TopicList {
+  topicId: string;
   topicName: string;
   todoList: TodoList[];
 }
@@ -19,15 +20,21 @@ export interface TodoState {
 export const state = (): TodoState => ({
   topicList: [
     {
+      topicId: 'topic1',
       topicName: 'TEST01',
       todoList: [
         { todoName: 'Project 1', status: true },
         { todoName: 'Project 2', status: false },
+        { todoName: 'Project 3', status: true },
       ],
     },
     {
+      topicId: 'topic2',
       topicName: 'TEST02',
-      todoList: [],
+      todoList: [
+        { todoName: 'Project 50', status: false },
+        { todoName: 'Project 60', status: true },
+      ],
     },
   ],
 });

@@ -19,10 +19,14 @@
           :key="todoIndex"
           class="card-todo__list"
         >
-          <v-checkbox v-model="todo.status" hide-details>
+          <v-checkbox
+            v-model="todoListChecked[topic.topicId]"
+            hide-details
+            :value="todo.todoName"
+            @change="checkTodo(todo.todoName)"
+          >
             <template #label>
-              <slot name="sdsd">label value is here</slot>
-              <!-- <span>hello</span> -->
+              <span>{{ todo.todoName }}</span>
             </template>
           </v-checkbox>
         </div>
@@ -37,21 +41,56 @@ import {
   useStore,
   computed,
   watch,
+  ref,
+  onMounted,
+  onBeforeMount,
+  reactive,
 } from '@nuxtjs/composition-api';
 import { key, TopicList, GettersPath } from '../../store/todo/index';
+
+type TodoListChecked = {
+  [index: string]: Array<string>;
+};
+
 export default defineComponent({
   setup() {
     const store = useStore(key);
     const topicList = computed<TopicList[]>(
       () => store.getters[GettersPath.GET_TODO_STATE],
     );
-    // console.log('TodoCard LOAD:', store);
+    const todoListChecked = reactive<TodoListChecked>({});
 
     watch([topicList], () => {
       console.log('todostate:', topicList.value);
     });
 
-    return { topicList };
+    onBeforeMount(() => {
+      console.log('topicList:', topicList.value);
+      for (const data of topicList.value) {
+        // Add index name in to array
+        if (!todoListChecked[data.topicId]) {
+          todoListChecked[data.topicId] = [];
+        }
+        // if any todo in any topic is done -> add to list
+        for (const todo of data.todoList) {
+          if (todo.status) {
+            todoListChecked[data.topicId].push(todo.todoName);
+          }
+        }
+      }
+      console.log(todoListChecked);
+    });
+
+    const CheckboxModel = (topicId: string) => {
+      console.log(topicId);
+      return todoListChecked.todo1;
+    };
+
+    const checkTodo = (value: string): void => {
+      console.log(value);
+    };
+
+    return { topicList, checkTodo, todoListChecked, CheckboxModel };
   },
 });
 </script>
